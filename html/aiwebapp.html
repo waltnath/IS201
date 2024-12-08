@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minesweeper</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #74ebd5, #acb6e5);
+            color: #333;
+            overflow: hidden;
+        }
+
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            color: #fff;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+        }
+
+
+        #game {
+            display: grid;
+            gap: 2px;
+            background-color: rgba(0, 0, 0, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #f0f0f0;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+
+        .cell:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+
+        .cell.revealed {
+            background-color: #e0e0e0;
+            cursor: default;
+            box-shadow: none;
+        }
+
+
+        .cell.mine {
+            background-color: crimson;
+            color: white;
+            animation: blink 0.5s infinite alternate;
+        }
+
+
+        .cell.flag {
+            background-color: #ffd700;
+            color: #333;
+        }
+
+
+        #reset {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+        }
+
+
+        #reset:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+
+
+        #win-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            text-align: center;
+            z-index: 10;
+        }
+
+
+        #win-screen p {
+            margin: 0;
+            padding: 0;
+            animation: pulse 1.5s infinite;
+        }
+
+
+        #win-screen button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+
+        #win-screen button:hover {
+            background-color: #218838;
+            transform: scale(1.1);
+        }
+
+
+        #instructions {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+
+        #instructions button {
+            margin-top: 20px;
+            padding: 12px 25px;
+            font-size: 18px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+
+        #instructions button:hover {
+            background-color: #218838;
+            transform: scale(1.1);
+        }
+
+        #link-box {
+            width: 100%;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            text-align: center;
+            position: absolute;
+            top: 0;
+        }
+
+        #link-box a {
+            color: #74ebd5;
+            text-decoration: none;
+            margin: 0 15px;
+            font-size: 1.1em;
+        }
+
+        #link-box a:hover {
+            text-decoration: underline;
+        }
+
+
+        @keyframes blink {
+            from { background-color: crimson; }
+            to { background-color: darkred; }
+        }
+
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <h1>Minesweeper</h1>
+
+    <div id="link-box">
+      <a href="../index.html">Back to Home</a>
+    </div>
+
+
+    <!-- Instructions Modal -->
+    <div id="instructions">
+        <p>Welcome to Minesweeper!</p>
+        <p>Click a cell to reveal it. The goal is to clear all the cells without clicking on a mine.</p>
+        <p>Right-click to flag a cell as containing a mine.</p>
+        <p>If you reveal all non-mine cells, you win!</p>
+        <button onclick="startGame()">Start Game</button>
+    </div>
+
+
+    <div id="game"></div>
+    <button id="reset" style="display: none;">Reset</button>
+
+
+    <div id="win-screen">
+        <p>🎉 Congratulations, You Win! 🎉</p>
+        <button onclick="createGame()">Play Again</button>
+    </div>
+
+
+    <script>
+        const gridSize = 8;
+        const mineCount = 10;
+
+
+        let game = document.getElementById('game');
+        let resetButton = document.getElementById('reset');
+        let winScreen = document.getElementById('win-screen');
+        let instructions = document.getElementById('instructions');
+        let grid = [];
+        let mines = [];
+        let firstClick = true;
+        let revealedCells = 0;
+
+
+        function startGame() {
+            instructions.style.display = 'none';
+            game.style.display = 'grid';
+            resetButton.style.display = 'block';
+            createGame();
+        }
+
+
+        function createGame() {
+            game.style.gridTemplateRows = `repeat(${gridSize}, 1fr)`;
+            game.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
+
+
+            grid = [];
+            mines = [];
+            firstClick = true;
+            revealedCells = 0;
+            winScreen.style.display = 'none';
+            game.innerHTML = '';
+
+
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                let cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+
+
+                cell.addEventListener('click', () => handleClick(i));
+                cell.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    toggleFlag(cell);
+                });
+
+
+                game.appendChild(cell);
+                grid.push(cell);
+            }
+        }
+
+
+        function placeMines(excludeIndexes) {
+            mines = [];
+            while (mines.length < mineCount) {
+                let randomIndex = Math.floor(Math.random() * gridSize * gridSize);
+                if (!mines.includes(randomIndex) && !excludeIndexes.includes(randomIndex)) {
+                    mines.push(randomIndex);
+                }
+            }
+        }
+
+
+        let gameStarted = false;  // Track whether the game has started
+
+        function handleClick(index) {
+            if (firstClick) {
+                firstClick = false;
+                let safeZone = getSafeZone(index);
+                placeMines(safeZone);
+                revealSafeZone(safeZone);
+                gameStarted = true;  // Mark the game as started after the first click
+            } else {
+                revealCell(index);
+            }
+        }
+
+
+        function revealSafeZone(safeZone) {
+            safeZone.forEach(index => {
+                revealCell(index, true);
+            });
+        }
+
+
+        function revealCell(index, isSafeZone = false) {
+            let cell = grid[index];
+            if (cell.classList.contains('revealed') || cell.classList.contains('flag')) return;
+
+            if (mines.includes(index) && !isSafeZone) {
+                cell.classList.add('mine');
+                alert('Game Over!');
+                revealAll();
+                return;
+            }
+
+            cell.classList.add('revealed');
+            revealedCells++;  // Increment after revealing a valid cell
+
+            if (gameStarted) {
+                checkWin();  // Check win condition only if the game has started
+            }
+
+            let adjacentMines = countAdjacentMines(index);
+
+            if (adjacentMines > 0) {
+                cell.textContent = adjacentMines;
+            } else if (!isSafeZone) {
+                revealAdjacentCells(index);
+            }
+        }
+
+
+        function countAdjacentMines(index) {
+            let neighbors = getNeighbors(index);
+            return neighbors.filter(i => mines.includes(i)).length;
+        }
+
+
+        function revealAdjacentCells(index) {
+            let neighbors = getNeighbors(index);
+            neighbors.forEach(i => {
+                if (!grid[i].classList.contains('revealed')) {
+                    revealCell(i);
+                }
+            });
+        }
+
+
+        function getSafeZone(index) {
+            let safeZone = [index, ...getNeighbors(index)];
+            return Array.from(new Set(safeZone)); // Ensure no duplicates
+        }
+
+
+        function getNeighbors(index) {
+            let neighbors = [];
+            let row = Math.floor(index / gridSize);
+            let col = index % gridSize;
+
+
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    let newRow = row + dr;
+                    let newCol = col + dc;
+
+
+                    if (newRow >= 0 && newRow < gridSize && newCol >= 0 && newCol < gridSize) {
+                        neighbors.push(newRow * gridSize + newCol);
+                    }
+                }
+            }
+
+
+            return neighbors;
+        }
+
+
+        function toggleFlag(cell) {
+            if (cell.classList.contains('revealed')) return;
+
+
+            if (cell.classList.contains('flag')) {
+                cell.classList.remove('flag');
+                cell.textContent = '';
+            } else {
+                cell.classList.add('flag');
+                cell.textContent = '🚩';
+            }
+        }
+
+
+        function checkWin() {
+            // Ensure the win condition check happens only after the game has started
+            if (revealedCells === gridSize * gridSize - mineCount) {
+                winScreen.style.display = 'flex';  // Show win screen when all non-mine cells are revealed
+            }
+        }
+
+        
+        function revealAll() {
+            grid.forEach((cell, index) => {
+                if (mines.includes(index)) {
+                    cell.classList.add('mine');
+                }
+                cell.classList.add('revealed');
+            });
+        }
+
+
+        resetButton.addEventListener('click', createGame);
+
+
+        // Initialize the game with instructions screen
+    </script>
+</body>
+</html>
+
+
+
